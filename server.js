@@ -3,10 +3,23 @@ const app = express();
 require('./connexion')
 
 const reply = require('./modeldb')
+const email=require("./emailDB")
 const book=require("./reservModel")
 const menu=require("./MenuDB")
-const main=require("./MenuDB2")
-const desserts=require("./MenuDB3")
+const User=require("./Login")
+const bcrypt=require("bcrypt")
+const jwt=require("jsonwebtoken")
+const cookieParser=require("cookie-parser")
+const bodyParser=require("body-parser")
+
+
+app.use(cookieParser())
+app.use(bodyParser.json());
+
+const users = [
+  { id: 1, email: 'admin@example.com', password: 'admin123', role: 'admin' }
+ 
+];
 
 
 var cors = require('cors')
@@ -38,6 +51,18 @@ app.post('/reservation', async(req, res) =>{
     }
 })
 
+//EMAILJS
+app.post('/footer', async(req, res) =>{
+  console.log("hello i am here");
+    const {email} = req.body
+    try{
+        const newPost = await email.create({email});
+        res.json(newPost)
+    }catch(error){
+        res.status(500).send(error)
+    }
+})
+
 //MENU starters
 app.post('/menu', async(req, res) =>{
   console.log("hello menu");
@@ -49,7 +74,8 @@ app.post('/menu', async(req, res) =>{
         res.status(500).send(error)
     }
 })
-//MENU main
+//*User POST
+
 
 
 //GET MENU
@@ -63,8 +89,18 @@ app.get('/menu', async(req , res) =>{
         res.status(500).send(error)
     }
   })
-///Get MAIN
+///Get POTGPT //             /
+app.post('/Login', (req, res) => {
+  const { email, password } = req.body;
 
+  const user = users.find((u) => u.email === email && u.password === password);
+
+  if (user) {
+    res.json({ status: 'Success', role: user.role });
+  } else {
+    res.status(401).json({ status: 'Failure', message: 'Invalid credentials' });
+  }
+});
 
 
   //get deseerts
@@ -104,7 +140,7 @@ app.put('/menu/:id', async(req , res) =>{
 //getting all the data from db 
 app.get('/', async(req , res) =>{
   try {
-    console.log("hello i am here");
+      console.log("hello i am here");
 
       const posts = await reply.find()
       res.json(posts)
